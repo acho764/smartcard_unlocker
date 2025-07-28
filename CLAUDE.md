@@ -21,19 +21,26 @@ This project provides multiple implementations for automatically locking/unlocki
    - Same functionality as bash version
    - Object-oriented design with proper error handling
 
+3. **`smartcard_config_monitor`** (C++) ✅ **CONFIGURABLE** - Multi-card support
+   - **NEW:** Configuration file based multi-card monitoring
+   - Support for different cards with different actions
+   - Custom script execution per card (insert/remove events)
+   - INI-style config file for easy management
+   - Perfect for unlock/lock + password pasting workflows
+
 ### Experimental Scripts
-3. **`udev_unlock.sh`** ⚠️ - Event-based monitoring (fixed but complex)
+4. **`udev_unlock.sh`** ⚠️ - Event-based monitoring (fixed but complex)
    - Uses udev events + inotify + polling
    - Multiple detection methods
    - More complex but theoretically faster response
 
-4. **`pcsc_unlock.sh`** ⚠️ - Uses pcsc_scan for detection
+5. **`pcsc_unlock.sh`** ⚠️ - Uses pcsc_scan for detection
    - Based on pcsc_scan output parsing
    - Sometimes misses events
 
 ### Browser Opening Scripts
-5. **`smartcard_monitor.sh`** - Opens mmc-bg.com when card detected
-6. **`pcsc_monitor.sh`** - Browser opening with pcsc_scan
+6. **`smartcard_monitor.sh`** - Opens mmc-bg.com when card detected
+7. **`pcsc_monitor.sh`** - Browser opening with pcsc_scan
 
 ## Dependencies
 
@@ -81,6 +88,40 @@ make
 ./smartcard_monitor --debug
 ```
 
+### Configurable Multi-Card Version ✨ **NEW**
+```bash
+# Compile the configurable version
+make smartcard_config_monitor
+
+# Run with default config (smartcard.conf)
+./smartcard_config_monitor
+
+# Run with debug output
+./smartcard_config_monitor --debug
+
+# Use custom config file
+./smartcard_config_monitor --config my_cards.conf
+
+# Help
+./smartcard_config_monitor --help
+```
+
+#### Configuration File Format (smartcard.conf)
+```ini
+# Your main unlock/lock card
+[3BE700FF8131FE454430382E32203655]
+insert=./unlock.sh
+remove=./lock.sh
+
+# Revolut card for password pasting
+[3BFF13000010003101F1564011001900000000000000]
+insert=./paste_pass.sh
+remove=
+
+# Postbank card (no actions)
+[3BFE1300001080351603528660C3A04A4345533332]
+```
+
 ### Advanced Usage
 ```bash
 # Try the enhanced udev version
@@ -121,6 +162,14 @@ DEBUG=1 ./udev_unlock.sh
 - [x] Provided usage instructions
 - [x] Set up git repository
 
+### Phase 6: Multi-Card Configuration System ✅ **NEW**
+- [x] Created configurable C++ version (`smartcard_config_monitor`)
+- [x] Implemented INI-style configuration file parser
+- [x] Added multi-card support with different actions per card
+- [x] Created example scripts (unlock.sh, lock.sh, paste_pass.sh)
+- [x] Added card swapping detection and handling
+- [x] Documented configuration format and usage
+
 ## Technical Details
 
 ### Lock/Unlock Methods Used
@@ -134,11 +183,23 @@ DEBUG=1 ./udev_unlock.sh
 2. **udev Events** - Kernel-level USB device monitoring
 3. **inotify** - Filesystem change monitoring
 4. **pcsc_scan** - PC/SC service output parsing
+5. **Configurable Multi-Card** - Polling with custom script execution per card
 
 ### ATR Processing
 - Raw pcsc_scan format: `3B E7 00 FF 81 31 FE 45 44 30 38 2E 32 20 36 55`  
 - opensc-tool format: `0081314544303832203655` (spaces and some bytes removed)
+- C++ versions use full format: `3BE700FF8131FE454430382E32203655`
 - Scripts handle both formats appropriately
+
+### Multi-Card Configuration
+- **Configuration file**: INI-style format with [ATR] sections
+- **Per-card actions**: Different insert/remove scripts for each card
+- **Card swapping**: Automatic detection and script execution
+- **Example use cases**: 
+  - Main card: unlock/lock system
+  - Second card: paste passwords
+  - Third card: custom automation scripts
+- **Script execution**: Runs in background, checks script exists and is executable
 
 ## Troubleshooting
 
@@ -195,8 +256,12 @@ sudo systemctl enable smartcard-unlock.service
 
 ### Build Commands
 ```bash
-# Compile C++ version
-make
+# Compile all versions
+make all
+
+# Compile specific version
+make smartcard_monitor
+make smartcard_config_monitor
 
 # Clean build files  
 make clean
@@ -215,6 +280,9 @@ DEBUG=1 ./simple_unlock.sh
 
 # Test C++ version
 ./smartcard_monitor --debug
+
+# Test configurable version
+./smartcard_config_monitor --debug
 ```
 
 ### Lint/Check Commands
