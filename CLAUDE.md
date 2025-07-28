@@ -57,6 +57,9 @@ sudo apt install inotify-tools
 
 # For development (C++ version)
 sudo apt install build-essential g++ make
+
+# For VPN control (latest feature)
+sudo apt install wireguard
 ```
 
 ### System Requirements
@@ -118,8 +121,10 @@ remove=./lock.sh
 insert=./paste_pass.sh
 remove=
 
-# Postbank card (no actions)
+# Postbank card for VPN control  
 [3BFE1300001080351603528660C3A04A4345533332]
+insert=./vpn_up.sh
+remove=./vpn_down.sh
 ```
 
 ### Advanced Usage
@@ -130,6 +135,35 @@ DEBUG=1 ./udev_unlock.sh
 # Browser opening version
 ./smartcard_monitor.sh
 ```
+
+### VPN Control Setup ✨ **LATEST**
+```bash
+# 1. Install WireGuard (if not installed)
+sudo apt install wireguard
+
+# 2. Setup passwordless VPN control (run once)
+sudo ./setup_vpn_permissions.sh
+
+# 3. Place your WireGuard config
+sudo nano /etc/wireguard/wg0.conf
+
+# 4. Test VPN scripts manually
+./vpn_up.sh    # Brings up VPN
+./vpn_down.sh  # Brings down VPN
+
+# 5. Run with Postbank card
+./smartcard_config_monitor --debug
+# Insert Postbank card → VPN connects
+# Remove Postbank card → VPN disconnects
+```
+
+#### VPN Script Features
+- **Automatic connection**: Insert card → VPN up, Remove card → VPN down
+- **Status detection**: Properly detects WireGuard interface state  
+- **Connection details**: Shows endpoint, handshake timing, public IP
+- **Desktop notifications**: Visual feedback for VPN status changes
+- **Comprehensive logging**: All actions logged to `/tmp/smartcard_vpn.log`
+- **Error handling**: Graceful handling of missing configs or permissions
 
 ## Development Progress
 
@@ -170,6 +204,14 @@ DEBUG=1 ./udev_unlock.sh
 - [x] Added card swapping detection and handling
 - [x] Documented configuration format and usage
 
+### Phase 7: VPN Integration & Advanced Automation ✅ **LATEST**
+- [x] Created WireGuard VPN control scripts (`vpn_up.sh`, `vpn_down.sh`)
+- [x] Fixed VPN status detection using proper WireGuard commands
+- [x] Added comprehensive logging and desktop notifications
+- [x] Implemented passwordless sudo setup for VPN control
+- [x] Configured Postbank card for automatic VPN control
+- [x] Added public IP monitoring and connection status tracking
+
 ## Technical Details
 
 ### Lock/Unlock Methods Used
@@ -197,9 +239,11 @@ DEBUG=1 ./udev_unlock.sh
 - **Card swapping**: Automatic detection and script execution
 - **Example use cases**: 
   - Main card: unlock/lock system
-  - Second card: paste passwords
-  - Third card: custom automation scripts
+  - Revolut card: paste passwords  
+  - Postbank card: VPN control (WireGuard)
+  - Additional cards: custom automation scripts
 - **Script execution**: Runs in background, checks script exists and is executable
+- **VPN Integration**: Automatic WireGuard tunnel control with status monitoring
 
 ## Troubleshooting
 
@@ -208,6 +252,8 @@ DEBUG=1 ./udev_unlock.sh
 2. **Card not detected** - Verify ATR with `opensc-tool --atr`
 3. **Screen doesn't unlock** - Install xdotool, check DISPLAY variable
 4. **Events missed** - Use simple_unlock.sh (most reliable)
+5. **VPN not connecting** - Check WireGuard config exists at `/etc/wireguard/wg0.conf`
+6. **Permission denied for VPN** - Run `sudo ./setup_vpn_permissions.sh` once
 
 ### Debug Commands
 ```bash
@@ -221,6 +267,12 @@ gnome-screensaver-command -l
 
 # Monitor USB events
 DEBUG=1 ./udev_unlock.sh
+
+# Test VPN functionality
+sudo wg show                    # Check current VPN status
+./vpn_up.sh                    # Test VPN connection
+./vpn_down.sh                  # Test VPN disconnection
+tail -f /tmp/smartcard_vpn.log # Monitor VPN logs
 ```
 
 ## Installation for Auto-Start
