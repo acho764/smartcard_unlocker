@@ -12,7 +12,7 @@
 
 class SmartCardMonitor {
 private:
-    const std::string TARGET_ATR = "0081314544303832203655";
+    const std::string TARGET_ATR = "3BE700FF8131FE454430382E32203655";
     const int CHECK_INTERVAL_MS = 500;
     bool debug_mode = false;
     bool card_present = false;
